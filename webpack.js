@@ -1,20 +1,19 @@
 'use strict';
 /**
- * Webpack config
- * This file compiles the SCSS and JS according
- * to the build environment.
- */
+* Webpack config
+* This file compiles the SCSS and JS according
+* to the build environment.
+*
+* This file looks like a lot, but is nicely documented
+*/
 
-// todo: add scss loader & text extract
-// todo: add postcss & autoprefixer
-// todo: add react debug stuff?
-
-// todo: test autoprefixer
 // todo: test testing output
 
 // Modules
 var path = require('path');
 var webpack = require('webpack');
+var autoprefixer = require('autoprefixer');
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 module.exports = function makeWebpackConfig(options) {
 
@@ -26,23 +25,17 @@ module.exports = function makeWebpackConfig(options) {
         plugins: []
     };
 
-    /*
-    Setup entrypoint
-    */
+    // Setup entrypoint
     config.entry = './src/index.jsx'
 
-    /*
-    Setup output
-    */
+    // Setup output
     config.output = {
-        path: __dirname,
+        path: options.environment == 'production' ? __dirname + '/build' : __dirname,
         filename: options.environment == 'production' ? '[name].[hash].js' : 'bundle.js',
         chunkFilename: options.environment == 'production' ? '[name].[hash].js' : '[name].bundle.js'
     };
 
-    /* Babel Loader for transpiling JS
-     * Reference: http://webpack.github.io/docs/
-     */
+    // Babel Loader for transpiling JS
     var babelLoader = {
         test: /\.jsx?$/, // .js*
         exclude: /(node_modules)/,
@@ -58,9 +51,27 @@ module.exports = function makeWebpackConfig(options) {
     }
     config.module.loaders.push(babelLoader);
 
-    /*
-    Setup devtool according to environment
-    */
+
+    //Setup SASS loading and autoprefixer
+    var sassLoader = {
+        test: /\.scss$/,
+        loader: 'style!css!postcss-loader!sass'
+    };
+
+    // Setup extracting of css into a seperate file
+    if(options.environment == 'production') {
+        sassLoader.loader = ExtractTextPlugin.extract("style-loader", 'css!postcss-loader!sass')
+        config.plugins.push(
+            new ExtractTextPlugin("[name].[hash].css", {
+                allChunks: true
+            })
+        );
+    }
+
+    config.module.loaders.push(sassLoader);
+    config.postcss = [ autoprefixer({ browsers: ['last 2 versions'] }) ];
+
+    // Setup devtool according to environment
     if(options.environment == 'production') {
         config.devtool = 'source-map';
     } else if(options.environment == 'testing') {
@@ -69,18 +80,14 @@ module.exports = function makeWebpackConfig(options) {
         config.devtool = 'cheap-module-eval-source-map';
     }
 
-    /*
-    Setup appconfig
-    */
+    // Setup appconfig, this get's injected into the builded app
     config.plugins.push(
         new webpack.DefinePlugin({
             'APPCONFIG': options.appConfig
         })
     );
 
-    /*
-    Setup plugins according to environment
-    */
+    // Setup plugins according to environment
     if(options.environment == 'production') {
         config.plugins.push(
             new webpack.optimize.OccurenceOrderPlugin(),
@@ -100,23 +107,23 @@ module.exports = function makeWebpackConfig(options) {
     }
 
     /**
-     * Dev server configuration
-     * Reference: http://webpack.github.io/docs/configuration.html#devserver
-     * Reference: http://webpack.github.io/docs/webpack-dev-server.html
-     */
+    * Dev server configuration
+    * Reference: http://webpack.github.io/docs/configuration.html#devserver
+    * Reference: http://webpack.github.io/docs/webpack-dev-server.html
+    */
     config.devServer = {
         outputPath: __dirname,
         /*watchOptions: {
-            aggregateTimeout: 300,
-            poll: 1000
-        },*/ // Uncomment for VirtualBox mount problems with reloading/watching
-        stats: {
-            modules: false,
-            cached: false,
-            colors: true,
-            chunk: false
-        }
-    };
+        aggregateTimeout: 300,
+        poll: 1000
+    },*/ // Uncomment for VirtualBox mount problems with reloading/watching
+    stats: {
+        modules: false,
+        cached: false,
+        colors: true,
+        chunk: false
+    }
+};
 
-    return config;
+return config;
 };
