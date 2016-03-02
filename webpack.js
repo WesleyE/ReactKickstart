@@ -5,9 +5,12 @@
  * to the build environment.
  */
 
- // todo: add autoprefixer
- // todo: add postcss
- // todo: add react debug stuff?
+// todo: add scss loader & text extract
+// todo: add postcss & autoprefixer
+// todo: add react debug stuff?
+
+// todo: test autoprefixer
+// todo: test testing output
 
 // Modules
 var path = require('path');
