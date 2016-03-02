@@ -71,6 +71,13 @@ module.exports = function makeWebpackConfig(options) {
     config.module.loaders.push(sassLoader);
     config.postcss = [ autoprefixer({ browsers: ['last 2 versions'] }) ];
 
+    // Enable loaders for Bootstrap (fonts and urls)
+
+    var woffLoader = {test: /\.woff2?(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: "url-loader?limit=10000&minetype=application/font-woff" };
+    var fileLoader = {test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: "file-loader" };
+    config.module.loaders.push(woffLoader);
+    config.module.loaders.push(fileLoader);
+
     // Setup devtool according to environment
     if(options.environment == 'production') {
         config.devtool = 'source-map';
